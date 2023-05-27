@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 device_t devices[MAX_DEVICES];
 unsigned int devicesFound = 0;
@@ -37,6 +38,8 @@ int main(void) {
         goto error;
       }
     }
+
+    usleep(50 * 1000);
   }
 
   return 0;

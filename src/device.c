@@ -87,6 +87,12 @@ char handleDevice(device_t *device) {
   struct input_event event;
   int res;
 
+  if ((res = libevdev_kernel_set_led_value(
+           device->eDev, LED_SCROLLL,
+           device->enabled ? LIBEVDEV_LED_ON : LIBEVDEV_LED_OFF)) < 0) {
+    fprintf(stderr, "Warn: %s\n", strerror(-res));
+  }
+
   res = libevdev_next_event(device->eDev, LIBEVDEV_READ_FLAG_NORMAL, &event);
 
   if (res == -EAGAIN)
@@ -97,11 +103,6 @@ char handleDevice(device_t *device) {
 
   if (event.type == EV_KEY && event.value && event.code == KEY_SCROLLLOCK) {
     device->enabled = !device->enabled;
-    if ((res = libevdev_kernel_set_led_value(
-             device->eDev, LED_SCROLLL,
-             device->enabled ? LIBEVDEV_LED_ON : LIBEVDEV_LED_OFF)) < 0) {
-      fprintf(stderr, "Warn: %s\n", strerror(-res));
-    }
   }
 
   return TRUE;

@@ -1,0 +1,10 @@
+[Unit]
+Description=Manage keyboard's scroll lock led
+
+[Service]
+Restart=Always
+ExecStart=/usr/local/bin/scrolllockd
+
+[Install]
+
+WantedBy=multi-user.target
