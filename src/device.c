@@ -2,17 +2,19 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <libevdev/libevdev.h>
+#include <linux/input-event-codes.h>
+#include <linux/input.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 const char FALSE = 0;
-const char TRUE = 0;
+const char TRUE = 1;
 
 char isEvent(const char *restrict item) { return item[0] == 'e'; }
 
-struct libevdev *isAValidDevice(const char *restrict eventFile) {
+struct libevdev *openDevice(const char *restrict eventFile) {
   char devicePath[MAX_DEVICE_PATH] = "/dev/input/";
   struct libevdev *eDev;
   int fd, res;
@@ -24,7 +26,6 @@ struct libevdev *isAValidDevice(const char *restrict eventFile) {
 
   devicePath[idx++] = '\0';
 
-  printf("Opening %s\n", devicePath);
   fd = open(devicePath, O_RDONLY);
 
   if (fd < 0)
@@ -37,15 +38,20 @@ struct libevdev *isAValidDevice(const char *restrict eventFile) {
     return NULL;
   }
 
-  printf("Input device name: \"%s\"\n", libevdev_get_name(eDev));
+  if (!libevdev_has_event_code(eDev, EV_KEY, KEY_SCROLLLOCK)) {
+    libevdev_free(eDev);
+    close(fd);
+    return NULL;
+  }
 
   return eDev;
 }
 
-char scanDevices(device_t devices[MAX_DEVICES]) {
+char scanDevices(device_t devices[MAX_DEVICES], unsigned int *devicesFound) {
   struct dirent *d;
   DIR *dp;
   struct libevdev *eDev;
+  device_t dev;
 
   dp = opendir("/dev/input/");
 
@@ -53,16 +59,25 @@ char scanDevices(device_t devices[MAX_DEVICES]) {
     return FALSE;
 
   while ((d = readdir(dp)) != NULL)
-
     if (isEvent(d->d_name)) {
-      eDev = isAValidDevice(d->d_name);
+      eDev = openDevice(d->d_name);
 
       if (!eDev)
-        return FALSE;
+        continue;
 
-      libevdev_free(eDev);
+      printf(" Found device: %s\n", libevdev_get_name(eDev));
+
+      dev.eDev = eDev;
+      dev.enabled = FALSE;
+
+      devices[(*devicesFound)++] = dev;
     }
 
   closedir(dp);
   return TRUE;
+}
+
+void closeDevice(device_t *device) {
+  close(libevdev_get_fd(device->eDev));
+  libevdev_free(device->eDev);
 }

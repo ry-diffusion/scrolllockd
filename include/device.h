@@ -3,8 +3,11 @@
 
 #define MAX_DEVICES 128
 #define MAX_DEVICE_PATH 280
+
 typedef struct {
-  const char *path;
+  struct libevdev *eDev;
+  char enabled;
 } device_t;
 
-char scanDevices(device_t devices[MAX_DEVICES]);
+char scanDevices(device_t devices[MAX_DEVICES], unsigned int *devicesFound);
+void closeDevice(device_t *device);
