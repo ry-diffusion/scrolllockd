@@ -1,8 +1,9 @@
+
 #include <device.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <libevdev/libevdev.h>
-#include <linux/input-event-codes.h>
 #include <linux/input.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -26,7 +27,7 @@ struct libevdev *openDevice(const char *restrict eventFile) {
 
   devicePath[idx++] = '\0';
 
-  fd = open(devicePath, O_RDONLY);
+  fd = open(devicePath, O_RDWR | O_NONBLOCK);
 
   if (fd < 0)
     return NULL;
@@ -80,4 +81,28 @@ char scanDevices(device_t devices[MAX_DEVICES], unsigned int *devicesFound) {
 void closeDevice(device_t *device) {
   close(libevdev_get_fd(device->eDev));
   libevdev_free(device->eDev);
+}
+
+char handleDevice(device_t *device) {
+  struct input_event event;
+  int res;
+
+  res = libevdev_next_event(device->eDev, LIBEVDEV_READ_FLAG_NORMAL, &event);
+
+  if (res == -EAGAIN)
+    return TRUE;
+
+  if (res != LIBEVDEV_READ_STATUS_SUCCESS && res != LIBEVDEV_READ_STATUS_SYNC)
+    return FALSE;
+
+  if (event.type == EV_KEY && event.value && event.code == KEY_SCROLLLOCK) {
+    device->enabled = !device->enabled;
+    if ((res = libevdev_kernel_set_led_value(
+             device->eDev, LED_SCROLLL,
+             device->enabled ? LIBEVDEV_LED_ON : LIBEVDEV_LED_OFF)) < 0) {
+      fprintf(stderr, "Warn: %s\n", strerror(-res));
+    }
+  }
+
+  return TRUE;
 }

@@ -11,3 +11,4 @@ typedef struct {
 
 char scanDevices(device_t devices[MAX_DEVICES], unsigned int *devicesFound);
 void closeDevice(device_t *device);
+char handleDevice(device_t *device);

@@ -1,7 +1,12 @@
 #include <device.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+device_t devices[MAX_DEVICES];
+unsigned int devicesFound = 0;
 
 void closeDevices(device_t devices[MAX_DEVICES], unsigned int devicesFound) {
   for (unsigned int idx = 0; idx < devicesFound; ++idx) {
@@ -10,22 +15,34 @@ void closeDevices(device_t devices[MAX_DEVICES], unsigned int devicesFound) {
   }
 }
 
+void onDrop(int signal) {
+  (void)signal;
+  closeDevices(devices, devicesFound);
+  exit(0);
+}
+
 int main(void) {
-  device_t devices[MAX_DEVICES];
-  unsigned int devicesFound = 0;
-
+  unsigned int idx = 0;
   if (!scanDevices(devices, &devicesFound)) {
-    fprintf(stderr,
-            "Error: Unable to scan devices. Are you root?\n Reason: %s\n",
-            strerror(errno));
-
     goto error;
   }
 
-  closeDevices(devices, devicesFound);
+  signal(SIGTERM, onDrop);
+  signal(SIGQUIT, onDrop);
+  signal(SIGINT, onDrop);
+
+  while (1) {
+    for (idx = 0; idx < devicesFound; ++idx) {
+      if (!handleDevice(&devices[idx])) {
+        goto error;
+      }
+    }
+  }
+
   return 0;
 
 error:
+  fprintf(stderr, "Error: %s\n", strerror(errno));
   closeDevices(devices, devicesFound);
   return 1;
 }
