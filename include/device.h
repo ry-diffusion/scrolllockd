@@ -1,7 +1,7 @@
 #pragma once
 #include <libevdev/libevdev.h>
 
-#define MAX_DEVICES 128
+#define MAX_DEVICES 24
 #define MAX_DEVICE_PATH 280
 
 typedef struct {

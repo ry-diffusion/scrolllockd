@@ -10,10 +10,8 @@ device_t devices[MAX_DEVICES];
 unsigned int devicesFound = 0;
 
 void closeDevices(device_t devices[MAX_DEVICES], unsigned int devicesFound) {
-  for (unsigned int idx = 0; idx < devicesFound; ++idx) {
-    device_t dev = devices[idx];
-    closeDevice(&dev);
-  }
+  for (unsigned int idx = 0; idx < devicesFound; ++idx)
+    closeDevice(&devices[idx]);
 }
 
 void onDrop(int signal) {
@@ -24,20 +22,18 @@ void onDrop(int signal) {
 
 int main(void) {
   unsigned int idx = 0;
-  if (!scanDevices(devices, &devicesFound)) {
+
+  if (!scanDevices(devices, &devicesFound))
     goto error;
-  }
 
   signal(SIGTERM, onDrop);
   signal(SIGQUIT, onDrop);
   signal(SIGINT, onDrop);
 
   while (1) {
-    for (idx = 0; idx < devicesFound; ++idx) {
-      if (!handleDevice(&devices[idx])) {
+    for (idx = 0; idx < devicesFound; ++idx)
+      if (!handleDevice(&devices[idx]))
         goto error;
-      }
-    }
 
     usleep(50 * 1000);
   }
