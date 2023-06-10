@@ -1,5 +1,5 @@
 [Unit]
-Description=Manage keyboard's scroll lock led
+Description=Manage keyboard scroll lock led
 
 [Service]
 Restart=Always
