@@ -1,5 +1,5 @@
 project('scrolllockd', 'c',
-  version : '23.03.01',
+  version : '23.03.02',
   default_options : ['warning_level=3', 'prefix=/usr/local'])
 
 dep_evdev = dependency('libevdev')
@@ -9,4 +9,6 @@ exe = executable('scrolllockd', [ 'src/main.c', 'src/device.c', 'src/cache.c' ],
   include_directories : [ 'include' ],
   install : true)
 
-install_data('misc/scrolllockd.service', install_dir : get_option('prefix') / 'lib' / 'systemd' / 'system')
+if get_option('enable_systemd')
+  install_data('misc/scrolllockd.service', install_dir : get_option('prefix') / 'lib' / 'systemd' / 'system')
+endif

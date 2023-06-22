@@ -38,11 +38,23 @@ int main(void)
 
 	if (!loadCache(devices, devicesFound, path))
 	{
-		perror("cache load fail");
+		perror("[[error:loadCache]]");
+	}
+
+	if (!devicesFound)
+	{
+		fprintf(stderr, "[[error:scanDevices]] Unable to find any "
+				"device. Are you root?\n");
+		return 1;
 	}
 
 	while (1)
 	{
+		/* The Lazier rescan algorithm */
+		devicesFound = 0;
+		if (scanDevices(devices, &devicesFound))
+			loadCache(devices, devicesFound, path);
+
 		for (idx = 0; idx < devicesFound; ++idx)
 			if (!handleDevice(&devices[idx]))
 				goto error;

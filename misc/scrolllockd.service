@@ -2,7 +2,7 @@
 Description=Manage keyboard scroll lock led
 
 [Service]
-Restart=Always
+Restart=always
 ExecStart=/usr/local/bin/scrolllockd
 
 [Install]
