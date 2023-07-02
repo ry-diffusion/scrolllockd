@@ -50,11 +50,6 @@ int main(void)
 
 	while (1)
 	{
-		/* The Lazier rescan algorithm */
-		devicesFound = 0;
-		if (scanDevices(devices, &devicesFound))
-			loadCache(devices, devicesFound, path);
-
 		for (idx = 0; idx < devicesFound; ++idx)
 			if (!handleDevice(&devices[idx]))
 				goto error;
