@@ -1,5 +1,5 @@
 project('scrolllockd', 'c',
-  version : '23.03.02',
+  version : '23.07.00',
   default_options : ['warning_level=3', 'prefix=/usr/local'])
 
 dep_evdev = dependency('libevdev')
