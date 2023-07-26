@@ -1,13 +1,12 @@
 const std = @import("std");
-const print = std.debug.print;
+const State = @import("state.zig").State;
 const devices = @import("devices.zig");
-const Device = devices.Device;
 const fmt = std.fmt;
 const fs = std.fs;
 const log = std.log;
-const gpa = std.heap.c_allocator;
 const time = std.time;
-const State = @import("state.zig").State;
+const Device = devices.Device;
+const gpa = std.heap.c_allocator;
 
 pub fn findDevices() !std.AutoHashMap(Device, bool) {
     const entries = try fs.openIterableDirAbsolute("/dev/input", .{});
