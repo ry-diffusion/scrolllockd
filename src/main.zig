@@ -1,10 +1,8 @@
 const std = @import("std");
 const stateMod = @import("state.zig");
 const devices = @import("devices.zig");
-const gpa = std.heap.c_allocator;
 const fmt = std.fmt;
 const fs = std.fs;
-const log = std.log;
 const time = std.time;
 const mem = std.mem;
 
@@ -15,6 +13,7 @@ const DeviceEntry = stateMod.DeviceEntry;
 
 const TICK_RESCAN_SERVICES: u8 = 32;
 const TICK_DURATION: u64 = 25 * 1000 * 1000;
+const STATE_FILE_PATH: []const u8 = "/var/db/scrolllockd/kbd.state";
 
 fn mapDevices(refDevices: *Devices) !void {
     var entries = try fs.openIterableDirAbsolute("/dev/input", .{});
@@ -24,6 +23,9 @@ fn mapDevices(refDevices: *Devices) !void {
     var it = entries.iterate();
 
     while (try it.next()) |entry| {
+        // HACK: because all events starts with letter `e`
+        // and I don't know other thing with starts with 'e', so...
+
         if (entry.name[0] != 'e')
             continue;
 
@@ -37,7 +39,10 @@ fn mapDevices(refDevices: *Devices) !void {
                 item.?.value.device.close();
             }
 
-            try refDevices.put(mem.span(device.getNameZ()), .{ .device = device, .enabled = false });
+            try refDevices.put(mem.span(device.getNameZ()), .{
+                .device = device,
+                .enabled = false,
+            });
 
             continue;
         }
@@ -86,11 +91,17 @@ pub fn handleDevices(supportedDevices: *Devices, state: State) !void {
 }
 
 pub fn main() !void {
-    var state = try State.open("/var/lib/scrolllockd/led.state", gpa);
-    var supportedDevices = Devices.init(gpa);
+    const ally = std.heap.c_allocator;
+    const log = std.log.scoped(.scrolllockd);
+    var state = State.open(STATE_FILE_PATH, ally);
+
+    var supportedDevices = Devices.init(ally);
     defer supportedDevices.deinit();
 
-    try state.read(supportedDevices);
+    state.read(supportedDevices) catch |err| {
+        log.err("unable to read state file {s}!", .{STATE_FILE_PATH});
+        return err;
+    };
 
     try handleDevices(&supportedDevices, state);
 }

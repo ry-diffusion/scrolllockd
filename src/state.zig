@@ -1,9 +1,9 @@
 const std = @import("std");
 const fs = std.fs;
 const mem = std.mem;
-const Device = @import("devices.zig").Device;
 const fmt = std.fmt;
 
+const Device = @import("devices.zig").Device;
 pub const DeviceEntry = struct { device: Device, enabled: bool };
 pub const Devices = std.StringHashMap(DeviceEntry);
 
@@ -11,7 +11,7 @@ pub const State = struct {
     path: []const u8,
     alloc: mem.Allocator,
 
-    pub fn open(path: []const u8, alloc: mem.Allocator) !State {
+    pub fn open(path: []const u8, alloc: mem.Allocator) State {
         return State{
             .path = path,
             .alloc = alloc,
