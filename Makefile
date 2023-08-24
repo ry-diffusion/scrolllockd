@@ -1,7 +1,10 @@
 PREFIX ?= /usr/local
+ZIG = zig
+
+.PHONY: systemd prepare 
 
 install:
-	zig build  -Doptimize=ReleaseSmall install --prefix $(PREFIX)
+	$(ZIG) build -Doptimize=ReleaseSmall install --prefix $(PREFIX)
 
 systemd:
 	mkdir -p $(PREFIX)/lib/systemd/system

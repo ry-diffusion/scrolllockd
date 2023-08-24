@@ -6,5 +6,4 @@ Restart=always
 ExecStart=/usr/local/bin/scrolllockd
 
 [Install]
-
 WantedBy=multi-user.target
