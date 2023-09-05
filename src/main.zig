@@ -35,8 +35,8 @@ fn mapDevices(refDevices: *Devices) !void {
         if (device.hasEventCode(devices.c.EV_KEY, devices.c.KEY_SCROLLLOCK) and device.hasEventCode(devices.c.EV_LED, devices.c.LED_SCROLLL)) {
             const item = refDevices.fetchRemove(mem.span(device.getNameZ()));
 
-            if (item != null) {
-                item.?.value.device.close();
+            if (item != null) |deviceRef| {
+                deviceRef.value.device.close();
             }
 
             try refDevices.put(mem.span(device.getNameZ()), .{
