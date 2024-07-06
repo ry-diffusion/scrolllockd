@@ -3,3 +3,5 @@ build/
 .codechecker/
 zig-cache/
 zig-out/
+
+.zig-cache/

@@ -11,35 +11,35 @@ const State = stateMod.State;
 const Devices = stateMod.Devices;
 const DeviceEntry = stateMod.DeviceEntry;
 
-const TICK_RESCAN_SERVICES: u8 = 32;
+const RESCAN_THRESHOULD: u8 = 32;
 const TICK_DURATION: u64 = 25 * 1000 * 1000;
 const STATE_FILE_PATH: []const u8 = "/var/db/scrolllockd/kbd.state";
 
-fn mapDevices(refDevices: *Devices) !void {
-    var entries = try fs.openIterableDirAbsolute("/dev/input", .{});
+fn mapDevices(deviceList: *Devices) !void {
+    var entries = try fs.openDirAbsolute("/dev/input", .{ .iterate = true });
     defer entries.close();
 
     var buf = [_]u8{undefined} ** 256;
-    var it = entries.iterate();
+    var entryIterator = entries.iterate();
 
-    while (try it.next()) |entry| {
+    while (try entryIterator.next()) |entry| {
         // HACK: because all events starts with letter `e`
         // and I don't know other thing with starts with 'e', so...
 
         if (entry.name[0] != 'e')
             continue;
 
-        const path = try fmt.bufPrint(&buf, "/dev/input/{s}", .{entry.name});
-        const device = try Device.open(path);
+        const deviceInputPath = try fmt.bufPrint(&buf, "/dev/input/{s}", .{entry.name});
+        const device = try Device.open(deviceInputPath);
 
         if (device.hasEventCode(devices.c.EV_KEY, devices.c.KEY_SCROLLLOCK) and device.hasEventCode(devices.c.EV_LED, devices.c.LED_SCROLLL)) {
-            const item = refDevices.fetchRemove(mem.span(device.getNameZ()));
+            const removedDevice = deviceList.fetchRemove(mem.span(device.getNameZ()));
 
-            if (item) |deviceRef| {
+            if (removedDevice) |deviceRef| {
                 deviceRef.value.device.close();
             }
 
-            try refDevices.put(mem.span(device.getNameZ()), .{
+            try deviceList.put(mem.span(device.getNameZ()), .{
                 .device = device,
                 .enabled = false,
             });
@@ -62,15 +62,15 @@ pub fn handleDevices(supportedDevices: *Devices, state: State) !void {
     var currentTick: u8 = 0;
 
     while (true) {
-        if (currentTick >= TICK_RESCAN_SERVICES) {
+        if (currentTick >= RESCAN_THRESHOULD) {
             try mapDevices(supportedDevices);
             try state.read(supportedDevices.*);
             currentTick = 0;
         }
 
-        var it = supportedDevices.*.valueIterator();
+        var supportedDeviceIterator = supportedDevices.*.valueIterator();
 
-        while (it.next()) |entry| {
+        while (supportedDeviceIterator.next()) |entry| {
             const device: Device = entry.*.device;
             const wasEnabled: bool = entry.*.enabled;
 

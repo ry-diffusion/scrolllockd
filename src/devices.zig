@@ -10,27 +10,27 @@ pub const Device = struct {
     file: fs.File,
 
     pub fn open(path: []const u8) !Device {
-        var repr: ?*c.struct_libevdev = null;
+        var rawDevice: ?*c.struct_libevdev = null;
 
         const file = try fs.openFileAbsolute(path, .{
             .mode = fs.File.OpenMode.read_write,
             .lock_nonblocking = false,
         });
 
-        const res = c.libevdev_new_from_fd(file.handle, &repr);
+        const res = c.libevdev_new_from_fd(file.handle, &rawDevice);
 
-        if (res != 0) {
-            const errno: u16 = @intCast(try math.absInt(res));
+        if (0 != res) {
+            const errno: u16 = @intCast(@abs(res));
             return @errorFromInt(errno);
         }
 
-        return Device{ .file = file, .repr = repr };
+        return Device{ .file = file, .repr = rawDevice };
     }
 
     pub fn getNameZ(self: Device) [*:0]const u8 {
-        const cString = c.libevdev_get_name(self.repr);
-        const nameZ: [*:0]const u8 = cString;
-        return nameZ;
+        const evdevName = c.libevdev_get_name(self.repr);
+        const deviceName: [*:0]const u8 = evdevName;
+        return deviceName;
     }
 
     pub fn poll(self: Device) ?c.input_event {
@@ -44,7 +44,7 @@ pub const Device = struct {
             .value = 0,
         };
 
-        if (c.libevdev_has_event_pending(self.repr) == 0) return null;
+        if (0 == c.libevdev_has_event_pending(self.repr)) return null;
 
         const res = c.libevdev_next_event(self.repr, c.LIBEVDEV_READ_FLAG_NORMAL, &event);
         _ = res;
@@ -66,14 +66,14 @@ pub const Device = struct {
 
         const res = c.libevdev_kernel_set_led_value(self.repr, code, c_value);
 
-        if (res != 0) {
-            const errno: u16 = @intCast(try math.absInt(res));
+        if (0 != res) {
+            const errno: u16 = @intCast(@abs(res));
             return @errorFromInt(errno);
         }
     }
 
     pub fn hasEventCode(self: Device, kind: u32, event: u32) bool {
-        return c.libevdev_has_event_code(self.repr, kind, event) != 0;
+        return 0 != c.libevdev_has_event_code(self.repr, kind, event);
     }
 
     pub fn close(self: Device) void {

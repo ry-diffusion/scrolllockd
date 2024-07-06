@@ -25,8 +25,8 @@ pub const State = struct {
 
         defer file.close();
 
-        const stat = try file.stat();
-        var buffer = try self.alloc.alloc(u8, stat.size);
+        const fileStats = try file.stat();
+        const buffer = try self.alloc.alloc(u8, fileStats.size);
         defer self.alloc.free(buffer);
 
         _ = try file.read(buffer);
@@ -41,13 +41,13 @@ pub const State = struct {
             const device_name = section.next() orelse
                 continue;
 
-            const enabled = raw_enabled[0] == '1';
+            const isEnabled = raw_enabled[0] == '1';
 
-            var it = items.iterator();
+            var itemIterator = items.iterator();
 
-            while (it.next()) |entry| {
+            while (itemIterator.next()) |entry| {
                 if (mem.eql(u8, entry.key_ptr.*, device_name)) {
-                    entry.value_ptr.*.enabled = enabled;
+                    entry.value_ptr.*.enabled = isEnabled;
                 }
             }
         }
@@ -59,9 +59,9 @@ pub const State = struct {
         });
 
         defer file.close();
-        var it = items.iterator();
+        var itemsIterator = items.iterator();
 
-        while (it.next()) |entry| {
+        while (itemsIterator.next()) |entry| {
             const name = entry.key_ptr.*;
             const deviceEntry: DeviceEntry = entry.value_ptr.*;
 
